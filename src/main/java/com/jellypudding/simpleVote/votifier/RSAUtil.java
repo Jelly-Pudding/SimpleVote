@@ -3,7 +3,6 @@ package com.jellypudding.simpleVote.votifier;
 import javax.crypto.Cipher;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.*;
