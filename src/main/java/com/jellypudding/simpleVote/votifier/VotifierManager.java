@@ -48,11 +48,8 @@ public class VotifierManager {
             
             // Log public key for server administrator
             plugin.getLogger().info("Vote listener started. Use this public key when registering your server on voting sites:");
-            plugin.getLogger().info(rsaUtil.getFormattedPublicKey());
-            
-            // Also log the v1 format key which may be needed for some v1 testers
-            plugin.getLogger().info("For Votifier v1 testing tools, you may need to use this format:");
             plugin.getLogger().info(rsaUtil.getV1FormattedPublicKey());
+            
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to start vote listener: " + e.getMessage());
             e.printStackTrace();

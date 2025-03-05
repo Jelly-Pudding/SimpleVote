@@ -34,7 +34,7 @@ public class KeyCommand implements CommandExecutor {
         
         sender.sendMessage(Component.text("=== SimpleVote Public Key ===", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("Use this key when registering on voting sites:", NamedTextColor.GREEN));
-        sender.sendMessage(Component.text(votifierManager.getRsaUtil().getFormattedPublicKey(), NamedTextColor.WHITE));
+        sender.sendMessage(Component.text(votifierManager.getRsaUtil().getV1FormattedPublicKey(), NamedTextColor.WHITE));
         
         // Port info
         int port = plugin.getConfig().getInt("votifier.port", 8192);
