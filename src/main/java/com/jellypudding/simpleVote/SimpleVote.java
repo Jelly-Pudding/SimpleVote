@@ -86,9 +86,7 @@ public final class SimpleVote extends JavaPlugin {
         PluginCommand testVoteCommand = getCommand("testvote");
         if (testVoteCommand != null) {
             testVoteCommand.setExecutor((sender, command, label, args) -> {
-                if (sender instanceof org.bukkit.entity.Player) {
-                    org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
-                    
+                if (sender instanceof org.bukkit.entity.Player player) {
                     // Create and call a vote event
                     com.jellypudding.simpleVote.events.VoteEvent voteEvent = new com.jellypudding.simpleVote.events.VoteEvent(
                             player.getName(),

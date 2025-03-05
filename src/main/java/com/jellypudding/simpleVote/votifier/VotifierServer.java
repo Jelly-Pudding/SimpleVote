@@ -292,7 +292,6 @@ public class VotifierServer extends Thread {
             } catch (Exception e) {
                 plugin.getLogger().severe("Error decrypting v1 vote: " + e.getMessage());
                 plugin.getLogger().log(Level.SEVERE, "Error details", e);
-                return;
             }
         } else {
             plugin.getLogger().warning("Incomplete v1 vote data received: " + totalRead + " bytes");
@@ -383,7 +382,6 @@ public class VotifierServer extends Thread {
             } catch (Exception e) {
                 plugin.getLogger().severe("Error processing V2 vote: " + e.getMessage());
                 plugin.getLogger().log(Level.SEVERE, "Error details", e);
-                return;
             }
         } else {
             plugin.getLogger().warning("Invalid JSON format in v2 vote");
@@ -399,16 +397,16 @@ public class VotifierServer extends Thread {
             try {
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     VoteEvent voteEvent = new VoteEvent(
-                        vote.getUsername(),
-                        vote.getServiceName(),
-                        vote.getAddress(),
-                        vote.getTimeStamp()
+                        vote.username(),
+                        vote.serviceName(),
+                        vote.address(),
+                        vote.timeStamp()
                     );
                     
                     // Call the event
                     Bukkit.getPluginManager().callEvent(voteEvent);
                     
-                    plugin.getLogger().info("Processed vote from " + vote.getUsername() + " (from " + vote.getServiceName() + ")");
+                    plugin.getLogger().info("Processed vote from " + vote.username() + " (from " + vote.serviceName() + ")");
                 });
                 
                 // Send success response

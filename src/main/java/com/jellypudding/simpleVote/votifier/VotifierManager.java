@@ -52,7 +52,7 @@ public class VotifierManager {
             
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to start vote listener: " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error details:", e);
         }
     }
     

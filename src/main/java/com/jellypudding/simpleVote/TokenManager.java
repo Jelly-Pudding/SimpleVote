@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class TokenManager {
@@ -24,10 +25,15 @@ public class TokenManager {
     private void loadTokens() {
         if (!tokenFile.exists()) {
             try {
-                plugin.getDataFolder().mkdirs();
-                tokenFile.createNewFile();
+                if (!plugin.getDataFolder().mkdirs() && !plugin.getDataFolder().exists()) {
+                    plugin.getLogger().warning("Failed to create plugin data folder");
+                }
+                if (!tokenFile.createNewFile()) {
+                    plugin.getLogger().warning("Failed to create tokens.yml file");
+                }
             } catch (IOException e) {
                 plugin.getLogger().severe("Could not create tokens.yml file: " + e.getMessage());
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Error details:", e);
             }
         }
         
@@ -35,7 +41,7 @@ public class TokenManager {
         
         // Load tokens into memory
         if (tokenConfig.contains("tokens")) {
-            for (String uuidString : tokenConfig.getConfigurationSection("tokens").getKeys(false)) {
+            for (String uuidString : Objects.requireNonNull(tokenConfig.getConfigurationSection("tokens")).getKeys(false)) {
                 try {
                     UUID uuid = UUID.fromString(uuidString);
                     int amount = tokenConfig.getInt("tokens." + uuidString);

@@ -4,7 +4,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public class ConfigManager {
     private final SimpleVote plugin;
-    private FileConfiguration config;
     
     private int tokensPerVote;
     private boolean broadcastVotes;
@@ -21,7 +20,7 @@ public class ConfigManager {
         
         // Load config
         plugin.reloadConfig();
-        config = plugin.getConfig();
+        FileConfiguration config = plugin.getConfig();
         
         // Set default values if they don't exist
         if (!config.contains("tokens-per-vote")) {

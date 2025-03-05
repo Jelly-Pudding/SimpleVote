@@ -10,24 +10,23 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.UUID;
 
 public class TokenCommand implements CommandExecutor {
-    private final SimpleVote plugin;
     private final TokenManager tokenManager;
 
     public TokenCommand(SimpleVote plugin, TokenManager tokenManager) {
-        this.plugin = plugin;
         this.tokenManager = tokenManager;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (args.length == 0) {
             // Check own tokens
-            if (sender instanceof Player) {
-                Player player = (Player) sender;
+            if (sender instanceof Player player) {
                 int tokens = tokenManager.getTokens(player.getUniqueId());
                 player.sendMessage(Component.text("You have ")
                         .color(NamedTextColor.GREEN)
@@ -48,13 +47,13 @@ public class TokenCommand implements CommandExecutor {
             String targetName = args[0];
             OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetName);
             
-            if (targetPlayer == null || !targetPlayer.hasPlayedBefore()) {
+            if (!targetPlayer.hasPlayedBefore()) {
                 sender.sendMessage(Component.text("Player not found: " + targetName, NamedTextColor.RED));
                 return false;
             }
             
             int tokens = tokenManager.getTokens(targetPlayer.getUniqueId());
-            sender.sendMessage(Component.text(targetPlayer.getName())
+            sender.sendMessage(Component.text(Objects.requireNonNull(targetPlayer.getName()))
                     .color(NamedTextColor.GOLD)
                     .append(Component.text(" has ").color(NamedTextColor.GREEN))
                     .append(Component.text(tokens).color(NamedTextColor.GOLD))
@@ -83,7 +82,7 @@ public class TokenCommand implements CommandExecutor {
             }
             
             OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetName);
-            if (targetPlayer == null || !targetPlayer.hasPlayedBefore()) {
+            if (!targetPlayer.hasPlayedBefore()) {
                 sender.sendMessage(Component.text("Player not found: " + targetName, NamedTextColor.RED));
                 return false;
             }
@@ -97,7 +96,7 @@ public class TokenCommand implements CommandExecutor {
                             .color(NamedTextColor.GREEN)
                             .append(Component.text(amount).color(NamedTextColor.GOLD))
                             .append(Component.text(" tokens to ").color(NamedTextColor.GREEN))
-                            .append(Component.text(targetPlayer.getName()).color(NamedTextColor.GOLD)));
+                            .append(Component.text(Objects.requireNonNull(targetPlayer.getName())).color(NamedTextColor.GOLD)));
                     break;
                 case "take":
                     if (tokenManager.removeTokens(targetUUID, amount)) {
@@ -105,7 +104,7 @@ public class TokenCommand implements CommandExecutor {
                                 .color(NamedTextColor.GREEN)
                                 .append(Component.text(amount).color(NamedTextColor.GOLD))
                                 .append(Component.text(" tokens from ").color(NamedTextColor.GREEN))
-                                .append(Component.text(targetPlayer.getName()).color(NamedTextColor.GOLD)));
+                                .append(Component.text(Objects.requireNonNull(targetPlayer.getName())).color(NamedTextColor.GOLD)));
                     } else {
                         sender.sendMessage(Component.text(targetPlayer.getName() + " doesn't have enough tokens.", NamedTextColor.RED));
                     }
@@ -114,7 +113,7 @@ public class TokenCommand implements CommandExecutor {
                     tokenManager.setTokens(targetUUID, amount);
                     sender.sendMessage(Component.text("Set ")
                             .color(NamedTextColor.GREEN)
-                            .append(Component.text(targetPlayer.getName()).color(NamedTextColor.GOLD))
+                            .append(Component.text(Objects.requireNonNull(targetPlayer.getName())).color(NamedTextColor.GOLD))
                             .append(Component.text("'s tokens to ").color(NamedTextColor.GREEN))
                             .append(Component.text(amount).color(NamedTextColor.GOLD)));
                     break;
