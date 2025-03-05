@@ -14,7 +14,11 @@ commands:
     description: Display the public key for registering on voting sites
     usage: /<command>
     permission: simplevote.admin
-  
+  testvote:
+    description: Simulate a vote (for testing only)
+    usage: /<command>
+    permission: simplevote.admin
+
 permissions:
   simplevote.check:
     description: Allows checking own token balance

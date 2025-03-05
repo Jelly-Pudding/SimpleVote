@@ -21,7 +21,7 @@ votifier:
   # Port to listen for vote connections (default is 8192)
   port: 8192
   # Whether to show detailed debug messages about vote connections
-  debug: false
+  debug: true
   # RSA key will be automatically generated on first start
   # You'll need to provide this public key to voting websites
 
