@@ -69,12 +69,21 @@ public class VoteListener implements Listener {
         
         // Broadcast the vote if enabled
         if (plugin.getConfigManager().getBroadcastVotes()) {
-            String voteMessage = plugin.getConfigManager().getVoteMessage()
-                    .replace("{player}", playerName)
-                    .replace("{service}", serviceName)
-                    .replace("{tokens}", String.valueOf(tokensPerVote));
+            // Get player's display name if online, otherwise use regular name
+            Component playerComponent;
+            if (player != null) {
+                playerComponent = player.displayName();
+            } else {
+                playerComponent = Component.text(playerName);
+            }
             
-            Bukkit.getServer().sendMessage(SimpleVote.colorize(voteMessage));
+            // Create vote message with player's display name and service
+            Component voteMessage = Component.empty()
+                .append(playerComponent)
+                .append(Component.text(" voted for the server on ", NamedTextColor.GREEN))
+                .append(Component.text(serviceName, NamedTextColor.YELLOW));
+            
+            Bukkit.getServer().sendMessage(voteMessage);
         }
         
         // Save tokens data

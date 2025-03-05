@@ -7,9 +7,13 @@ author: AlphaAlex115
 
 commands:
   tokens:
-    description: Check or manage your vote tokens
+    description: Check or manage vote tokens
     usage: /<command> [player]
     aliases: [votetoken, votetokens]
+  votesites:
+    description: Display a list of voting sites as clickable links
+    usage: /<command>
+    aliases: [vote, votes]
   votekey:
     description: Display the public key for registering on voting sites
     usage: /<command>

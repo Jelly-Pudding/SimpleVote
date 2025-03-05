@@ -6,13 +6,19 @@ tokens-per-vote: 1
 # Whether to broadcast votes to the server
 broadcast-votes: true
 
-# Message to broadcast when a player votes
-# Available placeholders: {player}, {service}, {tokens}
-vote-message: "&6{player} &avoted for the server on &e{service} &aand received &e{tokens} &atokens!"
-
 # Enable debug logging for all plugin components
 # This affects logging for Votifier and other components
 debug-mode: false
+
+# List of voting sites for the /votesites command
+# These will be displayed as clickable links in-game
+voting-sites:
+  - name: "PlanetMinecraft"
+    url: "https://planetminecraft.com/server/your-server-name/vote/"
+  - name: "Minecraft Server List"
+    url: "https://minecraft-server-list.com/server/your-server-id/vote/"
+  - name: "TopG"
+    url: "https://topg.org/minecraft-servers/server-your-server-id/vote"
 
 # Votifier settings (for receiving votes from voting websites)
 votifier:
