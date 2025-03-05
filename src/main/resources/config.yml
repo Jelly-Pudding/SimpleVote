@@ -17,10 +17,12 @@ voting-sites:
     url: "https://www.planetminecraft.com/server/minecraftoffline-net/vote/"
   - name: "Minecraft Server List"
     url: "https://minecraft-server-list.com/server/508715/vote/"
-  - name: "MinecraftServers.org"
-    url: "https://minecraftservers.org/vote/671779"
   - name: "minecraft-mp"
     url: "https://minecraft-mp.com/server/341384/vote/"
+  - name: "MinecraftServers.org"
+    url: "https://minecraftservers.org/vote/671779"
+  - name: "minecraft.buzz"
+    url: "https://minecraft.buzz/vote/13722"
 
 # Votifier settings (for receiving votes from voting websites)
 votifier:
