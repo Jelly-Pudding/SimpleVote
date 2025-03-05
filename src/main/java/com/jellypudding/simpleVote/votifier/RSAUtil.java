@@ -106,10 +106,48 @@ public class RSAUtil {
      * @return The decrypted message
      */
     public String decrypt(byte[] data) throws Exception {
-        Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
-        byte[] decryptedBytes = cipher.doFinal(data);
-        return new String(decryptedBytes, StandardCharsets.UTF_8);
+        try {
+            // Log data length for debugging
+            logger.info("Attempting to decrypt " + data.length + " bytes of data");
+            
+            // Configure cipher for RSA/ECB/PKCS1Padding - the most common format
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+            byte[] decryptedBytes = cipher.doFinal(data);
+            
+            String result = new String(decryptedBytes, StandardCharsets.UTF_8);
+            logger.info("Successfully decrypted data to: " + result);
+            return result;
+        } catch (Exception e) {
+            logger.warning("Failed to decrypt with PKCS1Padding: " + e.getMessage());
+            
+            try {
+                // Fall back to just "RSA" which uses default padding
+                logger.info("Trying fallback with default RSA padding");
+                Cipher cipher = Cipher.getInstance("RSA");
+                cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+                byte[] decryptedBytes = cipher.doFinal(data);
+                
+                String result = new String(decryptedBytes, StandardCharsets.UTF_8);
+                logger.info("Successfully decrypted data with fallback method: " + result);
+                return result;
+            } catch (Exception e2) {
+                logger.severe("All decryption attempts failed!");
+                
+                // Log data in hex format for debugging
+                StringBuilder hexDump = new StringBuilder();
+                hexDump.append("Hex dump of data (").append(data.length).append(" bytes): ");
+                for (int i = 0; i < Math.min(data.length, 64); i++) {
+                    hexDump.append(String.format("%02X ", data[i] & 0xFF));
+                }
+                if (data.length > 64) {
+                    hexDump.append("...");
+                }
+                logger.info(hexDump.toString());
+                
+                throw new Exception("Failed to decrypt data: " + e.getMessage(), e);
+            }
+        }
     }
     
     /**

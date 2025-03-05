@@ -81,6 +81,31 @@ public final class SimpleVote extends JavaPlugin {
         } else {
             getLogger().severe("Failed to register votekey command!");
         }
+        
+        // Add test vote command (for development only)
+        PluginCommand testVoteCommand = getCommand("testvote");
+        if (testVoteCommand != null) {
+            testVoteCommand.setExecutor((sender, command, label, args) -> {
+                if (sender instanceof org.bukkit.entity.Player) {
+                    org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
+                    
+                    // Create and call a vote event
+                    com.jellypudding.simpleVote.events.VoteEvent voteEvent = new com.jellypudding.simpleVote.events.VoteEvent(
+                            player.getName(),
+                            "TestService",
+                            "127.0.0.1",
+                            java.time.Instant.now().toString()
+                    );
+                    
+                    // Call the event
+                    org.bukkit.Bukkit.getPluginManager().callEvent(voteEvent);
+                    player.sendMessage(net.kyori.adventure.text.Component.text("Test vote simulated!", 
+                            net.kyori.adventure.text.format.NamedTextColor.GREEN));
+                    return true;
+                }
+                return false;
+            });
+        }
     }
     
     public TokenManager getTokenManager() {
