@@ -10,8 +10,8 @@ broadcast-votes: true
 # Available placeholders: {player}, {service}, {tokens}
 vote-message: "&6{player} &avoted for the server on &e{service} &aand received &e{tokens} &atokens!"
 
-# Debug mode - simulates a vote on player join if true
-# Only for testing purposes - set to false for production
+# Enable debug logging for all plugin components
+# This affects logging for Votifier and other components
 debug-mode: false
 
 # Votifier settings (for receiving votes from voting websites)
@@ -20,8 +20,6 @@ votifier:
   enabled: true
   # Port to listen for vote connections (default is 8192)
   port: 8192
-  # Whether to show detailed debug messages about vote connections
-  debug: true
   # RSA key will be automatically generated on first start
   # You'll need to provide this public key to voting websites
 

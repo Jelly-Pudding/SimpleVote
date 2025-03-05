@@ -35,7 +35,7 @@ public class VotifierManager {
         
         // Get port from config
         int port = plugin.getConfig().getInt("votifier.port", 8192);
-        boolean debug = plugin.getConfig().getBoolean("votifier.debug", false);
+        boolean debug = plugin.getConfig().getBoolean("debug-mode", false);
         
         // Set debug mode for RSA operations
         rsaUtil.setDebug(debug);
