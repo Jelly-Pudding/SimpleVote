@@ -1,0 +1,29 @@
+# SimpleVote Configuration
+
+# Tokens given per vote
+tokens-per-vote: 1
+
+# Whether to broadcast votes to the server
+broadcast-votes: true
+
+# Message to broadcast when a player votes
+# Available placeholders: {player}, {service}, {tokens}
+vote-message: "&6{player} &avoted for the server on &e{service} &aand received &e{tokens} &atokens!"
+
+# Debug mode - simulates a vote on player join if true
+# Only for testing purposes - set to false for production
+debug-mode: false
+
+# Votifier settings (for receiving votes from voting websites)
+votifier:
+  # Enable or disable the vote listener server
+  enabled: true
+  # Port to listen for vote connections (default is 8192)
+  port: 8192
+  # Whether to show detailed debug messages about vote connections
+  debug: false
+  # RSA key will be automatically generated on first start
+  # You'll need to provide this public key to voting websites
+
+# Note: Make sure your server host allows the votifier port (8192 by default)
+# to be open and accessible from the internet for vote receiving to work. 
