@@ -32,4 +32,4 @@ votifier:
   # You'll need to provide this public key to voting websites
 
 # Note: Make sure your server host allows the votifier port (8192 by default)
-# to be open and accessible from the internet for vote receiving to work. 
+# to be open and accessible from the internet for vote receiving to work.
