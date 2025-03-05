@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 public class RSAUtil {
     private final Logger logger;
     private KeyPair keyPair;
+    private boolean debug = false;
     
     public RSAUtil(Logger logger) {
         this.logger = logger;
@@ -107,47 +108,49 @@ public class RSAUtil {
      */
     public String decrypt(byte[] data) throws Exception {
         try {
-            // Log data length for debugging
-            logger.info("Attempting to decrypt " + data.length + " bytes of data");
+            if (debug) {
+                logger.info("Decrypting " + data.length + " bytes using RSA");
+            }
             
-            // Configure cipher for RSA/ECB/PKCS1Padding - the most common format
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            // Use a simple, compatible approach - just "RSA" with default options
+            Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
             byte[] decryptedBytes = cipher.doFinal(data);
             
             String result = new String(decryptedBytes, StandardCharsets.UTF_8);
-            logger.info("Successfully decrypted data to: " + result);
-            return result;
-        } catch (Exception e) {
-            logger.warning("Failed to decrypt with PKCS1Padding: " + e.getMessage());
             
-            try {
-                // Fall back to just "RSA" which uses default padding
-                logger.info("Trying fallback with default RSA padding");
-                Cipher cipher = Cipher.getInstance("RSA");
-                cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
-                byte[] decryptedBytes = cipher.doFinal(data);
-                
-                String result = new String(decryptedBytes, StandardCharsets.UTF_8);
-                logger.info("Successfully decrypted data with fallback method: " + result);
+            // Validate that it looks like a vote
+            if (result.startsWith("VOTE")) {
+                if (debug) {
+                    logger.info("Successfully decrypted vote data");
+                }
                 return result;
-            } catch (Exception e2) {
-                logger.severe("All decryption attempts failed!");
-                
-                // Log data in hex format for debugging
-                StringBuilder hexDump = new StringBuilder();
-                hexDump.append("Hex dump of data (").append(data.length).append(" bytes): ");
-                for (int i = 0; i < Math.min(data.length, 64); i++) {
-                    hexDump.append(String.format("%02X ", data[i] & 0xFF));
-                }
-                if (data.length > 64) {
-                    hexDump.append("...");
-                }
-                logger.info(hexDump.toString());
-                
-                throw new Exception("Failed to decrypt data: " + e.getMessage(), e);
+            } else {
+                throw new Exception("Decrypted data doesn't start with VOTE: " + result);
             }
+        } catch (Exception e) {
+            logger.severe("Failed to decrypt vote data: " + e.getMessage());
+            
+            // Log data in hex format for debugging
+            StringBuilder hexDump = new StringBuilder();
+            hexDump.append("Hex dump of data (").append(data.length).append(" bytes): ");
+            for (int i = 0; i < Math.min(data.length, 64); i++) {
+                hexDump.append(String.format("%02X ", data[i] & 0xFF));
+            }
+            if (data.length > 64) {
+                hexDump.append("...");
+            }
+            logger.info(hexDump.toString());
+            
+            throw e;
         }
+    }
+    
+    /**
+     * Enable/disable debug logging
+     */
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
     
     /**
@@ -185,5 +188,21 @@ public class RSAUtil {
         
         builder.append("-----END PUBLIC KEY-----");
         return builder.toString();
+    }
+    
+    /**
+     * Get the public key formatted specifically for v1 protocol (Votifier v1 tester)
+     * Some v1 testers/clients expect the key with different formatting
+     * 
+     * @return Votifier v1 compatible public key format
+     */
+    public String getV1FormattedPublicKey() {
+        if (keyPair == null) {
+            return "RSA keys not initialized";
+        }
+        
+        String base64Key = getPublicKeyBase64();
+        // Some v1 clients expect the key without line breaks
+        return base64Key;
     }
 } 
