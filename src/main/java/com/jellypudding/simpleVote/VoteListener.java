@@ -47,10 +47,14 @@ public class VoteListener implements Listener {
             // Add tokens
             tokenManager.addTokens(playerUUID, tokensPerVote);
             
-            // Notify player
+            // Notify player with proper singular/plural form
+            String tokenText = tokensPerVote == 1 ? "vote token" : "vote tokens";
             player.sendMessage(Component.text("Thanks for voting on " + serviceName + "! You received " 
-                    + tokensPerVote + " vote tokens.", NamedTextColor.GREEN));
-            player.sendMessage(Component.text("You now have " + tokenManager.getTokens(playerUUID) + " tokens.", 
+                    + tokensPerVote + " " + tokenText + ".", NamedTextColor.GREEN));
+            
+            int totalTokens = tokenManager.getTokens(playerUUID);
+            String totalTokenText = totalTokens == 1 ? "token" : "tokens";
+            player.sendMessage(Component.text("You now have " + totalTokens + " " + totalTokenText + ".", 
                     NamedTextColor.YELLOW));
         } else {
             // Player is offline, try to find their UUID
@@ -86,7 +90,7 @@ public class VoteListener implements Listener {
             Bukkit.getServer().sendMessage(voteMessage);
         }
         
-        // Save tokens data
-        tokenManager.saveTokens();
+        // Save tokens only for the player who just voted
+        tokenManager.savePlayerTokens(playerUUID);
     }
 } 
