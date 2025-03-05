@@ -6,8 +6,6 @@ import org.bukkit.Bukkit;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PushbackInputStream;
 import java.net.InetSocketAddress;
@@ -88,112 +86,110 @@ public class VotifierServer extends Thread {
      * Handle an incoming vote connection
      */
     private void handleVote(Socket socket) {
-        try {
+        try (socket) {
             // Get client info for logging
             String hostAddress = socket.getInetAddress().getHostAddress();
-            
+
             if (debug) {
                 plugin.getLogger().info("Received connection from " + hostAddress);
             }
-            
+
             // Configure socket with a reasonable timeout
             socket.setSoTimeout(5000);
-            
+
             // Set up input and output
             PushbackInputStream in = new PushbackInputStream(socket.getInputStream(), 512);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
                     socket.getOutputStream(), StandardCharsets.UTF_8));
-            
+
             // Generate challenge for v2 protocol
             String challenge = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-            
+
             // Check for pre-existing data (some v1 implementations send vote immediately)
             int availableBytes = in.available();
-            
+
             // Check if there's a full v1 vote block already (256 bytes)
             // As done in VotifierPlus - first check if a block is already waiting
             if (availableBytes >= 256) {
                 if (debug) {
                     plugin.getLogger().info("Detected v1 vote packet before handshake (" + availableBytes + " bytes available)");
                 }
-                
+
                 // Skip handshake for v1 vote blocks
                 processProxyHeaders(in, socket);
                 processV1Vote(in, writer, socket);
                 return;
             }
-            
+
             // Send appropriate handshake
-            // Use the same approach as VotifierPlus - send a single handshake message
-            boolean useTokens = true; // we will support v2 protocol as default
-            
-            String handshakeMessage;
-            if (useTokens) {
-                handshakeMessage = "VOTIFIER 2 " + challenge;
-            } else {
-                handshakeMessage = "VOTIFIER 1";
-            }
-            
+            // Support v2 protocol as default
+
+            String handshakeMessage = "VOTIFIER 2 " + challenge;
+
             writer.write(handshakeMessage);
             writer.newLine();
             writer.flush();
-            
+
             if (debug) {
                 plugin.getLogger().info("Sent handshake: " + handshakeMessage);
             }
-            
+
             // Process any proxy headers if available
-            if (in.available() > 0) {
+            if (socket.getInetAddress() != null) {
                 processProxyHeaders(in, socket);
             }
+
+            // Set socket timeout instead of busy-waiting
+            int originalTimeout = socket.getSoTimeout();
+            socket.setSoTimeout(2000); // 2 second timeout
             
-            // Wait for vote payload to arrive (up to 2 seconds)
-            long waitStart = System.currentTimeMillis();
-            while (in.available() == 0 && System.currentTimeMillis() - waitStart < 2000) {
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+            // Check if any data is available
+            try {
+                if (in.available() == 0) {
+                    // Try to read at least one byte to trigger timeout if needed
+                    in.mark(1);
+                    int readByte = in.read();
+                    if (readByte == -1) {
+                        // End of stream reached
+                        plugin.getLogger().warning("End of stream reached for " + hostAddress);
+                        return;
+                    }
+                    in.reset();
                 }
-            }
-            
-            // If no data is available even after waiting
-            if (in.available() == 0) {
+            } catch (java.net.SocketTimeoutException e) {
                 plugin.getLogger().warning("No data received from " + hostAddress);
                 return;
+            } finally {
+                // Restore original timeout
+                socket.setSoTimeout(originalTimeout);
             }
-            
+
             // Determine protocol version from the data format
             VoteProtocolVersion protocolVersion = detectProtocolVersion(in);
-            
+
             if (debug) {
                 plugin.getLogger().info("Detected vote protocol: " + protocolVersion);
             }
-            
+
             // Process the vote according to its protocol
             if (protocolVersion == VoteProtocolVersion.V1) {
                 processV1Vote(in, writer, socket);
             } else {
                 processV2Vote(in, writer, challenge, socket);
             }
-            
+
         } catch (java.net.SocketTimeoutException e) {
             plugin.getLogger().warning("Socket timeout when reading vote: " + e.getMessage());
             if (debug) {
-                e.printStackTrace();
+                plugin.getLogger().log(Level.WARNING, "Socket timeout details", e);
             }
         } catch (Exception e) {
             plugin.getLogger().warning("Error processing vote: " + e.getMessage());
             if (debug) {
-                e.printStackTrace();
-            }
-        } finally {
-            try {
-                socket.close();
-            } catch (Exception e) {
-                // Ignore
+                plugin.getLogger().log(Level.WARNING, "Error details", e);
             }
         }
+        // Ignore
     }
     
     /**
@@ -240,7 +236,6 @@ public class VotifierServer extends Thread {
         }
         
         // Read the full 256-byte block, similar to VotifierPlus implementation
-        long startTime = System.currentTimeMillis();
         while (totalRead < block.length) {
             int remaining = block.length - totalRead;
             int bytesRead = in.read(block, totalRead, remaining);
@@ -295,11 +290,9 @@ public class VotifierServer extends Thread {
                 processVoteEvent(vote, writer, socket);
                 
             } catch (Exception e) {
-                plugin.getLogger().warning("Failed to decrypt v1 vote: " + e.getMessage());
-                if (debug) {
-                    e.printStackTrace();
-                }
-                throw e;
+                plugin.getLogger().severe("Error decrypting v1 vote: " + e.getMessage());
+                plugin.getLogger().log(Level.SEVERE, "Error details", e);
+                return;
             }
         } else {
             plugin.getLogger().warning("Incomplete v1 vote data received: " + totalRead + " bytes");
@@ -333,7 +326,7 @@ public class VotifierServer extends Thread {
         int jsonStart = Math.max(0, jsonString.indexOf('{'));
         int jsonEnd = jsonString.lastIndexOf('}');
         
-        if (jsonStart > -1 && jsonEnd > jsonStart) {
+        if (jsonEnd > jsonStart) {
             jsonString = jsonString.substring(jsonStart, jsonEnd + 1);
             
             if (debug) {
@@ -342,11 +335,11 @@ public class VotifierServer extends Thread {
             
             // Parse as JSON
             try {
-                Map<String, Object> jsonMap = new Gson().fromJson(jsonString, Map.class);
+                Map<String, Object> jsonMap = new Gson().fromJson(jsonString, new com.google.gson.reflect.TypeToken<Map<String, Object>>(){}.getType());
                 
                 if (jsonMap.containsKey("payload")) {
                     String payload = (String) jsonMap.get("payload");
-                    Map<String, Object> voteData = new Gson().fromJson(payload, Map.class);
+                    Map<String, Object> voteData = new Gson().fromJson(payload, new com.google.gson.reflect.TypeToken<Map<String, Object>>(){}.getType());
                     
                     // Verify the challenge if available
                     if (voteData.containsKey("challenge")) {
@@ -388,11 +381,9 @@ public class VotifierServer extends Thread {
                     processVoteEvent(vote, writer, socket);
                 }
             } catch (Exception e) {
-                plugin.getLogger().warning("Error parsing v2 vote: " + e.getMessage());
-                if (debug) {
-                    e.printStackTrace();
-                }
-                throw e;
+                plugin.getLogger().severe("Error processing V2 vote: " + e.getMessage());
+                plugin.getLogger().log(Level.SEVERE, "Error details", e);
+                return;
             }
         } else {
             plugin.getLogger().warning("Invalid JSON format in v2 vote");
@@ -435,7 +426,7 @@ public class VotifierServer extends Thread {
             } catch (Exception e) {
                 plugin.getLogger().warning("Error processing vote event: " + e.getMessage());
                 if (debug) {
-                    e.printStackTrace();
+                    plugin.getLogger().log(Level.WARNING, "Error details", e);
                 }
             }
         });
@@ -461,7 +452,7 @@ public class VotifierServer extends Thread {
                     if (buf[0] == '\n')
                         break;
                 }
-                String proxyHeader = headerLine.toString("ASCII").trim();
+                String proxyHeader = headerLine.toString(StandardCharsets.US_ASCII).trim();
                 if (debug) {
                     plugin.getLogger().info("Discarded PROXY v1 header: " + proxyHeader);
                 }
@@ -560,7 +551,7 @@ public class VotifierServer extends Thread {
             lineBuffer.write(b);
         }
         
-        return lineBuffer.toString("ASCII").trim();
+        return lineBuffer.toString(StandardCharsets.US_ASCII).trim();
     }
     
     /**
@@ -572,7 +563,10 @@ public class VotifierServer extends Thread {
         // Shutdown the vote processor
         voteProcessor.shutdown();
         try {
-            voteProcessor.awaitTermination(2, TimeUnit.SECONDS);
+            boolean terminated = voteProcessor.awaitTermination(2, TimeUnit.SECONDS);
+            if (!terminated) {
+                plugin.getLogger().warning("Vote processor did not terminate in time");
+            }
         } catch (InterruptedException e) {
             // Ignore
         }
