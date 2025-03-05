@@ -5,9 +5,6 @@ import com.jellypudding.simpleVote.commands.TokenCommand;
 import com.jellypudding.simpleVote.commands.TokenTabCompleter;
 import com.jellypudding.simpleVote.commands.VoteSitesCommand;
 import com.jellypudding.simpleVote.votifier.VotifierManager;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -92,36 +89,8 @@ public final class SimpleVote extends JavaPlugin {
         }
     }
     
-    public TokenManager getTokenManager() {
-        return tokenManager;
-    }
-    
     public ConfigManager getConfigManager() {
         return configManager;
     }
-    
-    public VotifierManager getVotifierManager() {
-        return votifierManager;
-    }
-    
-    /**
-     * Utility method to colorize strings with color codes
-     * 
-     * @param message The message to colorize
-     * @return The colorized message as a Component
-     */
-    public static Component colorize(String message) {
-        return LegacyComponentSerializer.legacyAmpersand().deserialize(message);
-    }
-    
-    /**
-     * Utility method to get a colored component from a string
-     * 
-     * @param message The message
-     * @param color The color to use
-     * @return The colored component
-     */
-    public static Component color(String message, TextColor color) {
-        return Component.text(message, color);
-    }
+
 }
