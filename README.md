@@ -1,96 +1,60 @@
-# SimpleVote
+# SimpleVote Plugin
 
-A simple, completely self-contained vote plugin for Paper 1.21.4 that rewards players with `tokens` when they vote for your server.
+**SimpleVote** is a lightweight Minecraft Paper 1.21.4 plugin that rewards players with tokens when they vote for your server on voting websites. It includes built-in Votifier support to receive votes directly from voting sites.
 
 ## Features
-
-- **100% standalone** with built-in vote receiver - no external plugins required!
-- Built-in implementation of the Votifier protocol to receive votes directly from voting websites
-- Rewards players with tokens when they vote for your server
-- Configurable token amounts per vote
-- Works with any voting site that supports the Votifier protocol
-- Token management commands for admins
-- Token balance checking for players
-- Works with offline players (they'll receive tokens when they vote, even if offline)
-
-## How It Works
-
-SimpleVote implements the Votifier protocol directly within the plugin, opening a socket on port 8192 (configurable) to receive vote notifications from voting websites. When a player votes on a website, the website sends an encrypted message to your server, which SimpleVote receives, validates, and processes to award tokens to the player.
-
-## Requirements
-
-- Paper 1.21.4
-- A server with port forwarding capability (to receive votes from websites)
+- Rewards players with tokens for voting
+- Clickable list of voting sites for players
+- Automatically handles online and offline player voting
+- Admin commands to manage tokens
 
 ## Installation
+1. Download the latest release from [GitHub](https://github.com/Jelly-Pudding/SimpleVote/releases/latest).
+2. Place the `.jar` file in your server's `plugins` folder.
+3. Restart your server to generate the default configuration.
+4. Set up your server on voting sites using the public key displayed on startup or with the `/votekey` command.
 
-1. Download SimpleVote.jar from the releases section
-2. Place the .jar file in your server's `plugins` folder
-3. Start/restart your server
-4. Configure SimpleVote as needed (config.yml)
-5. Use the `/votekey` command to get your public key for voting websites
-6. Register your server on voting websites with your server IP, port, and public key
+## Setting Up Votifier
 
-## Configuration
+### Port Forwarding
+For voting websites to send votes to your server, you must ensure that the Votifier port (default: 8192) is open and forwarded to your server. This typically involves:
 
-The default configuration (`config.yml`) has the following options:
+1. Setting up port forwarding in your router's configuration
+2. Ensuring your firewall allows incoming connections on the specified port
+3. If using a hosting provider, check their documentation for port configuration
 
-```yaml
-# Tokens given per vote
-tokens-per-vote: 1
+### Registering on Voting Sites
+1. Start your server with SimpleVote installed
+2. The plugin will display its Votifier public key in the console during startup
+3. You can also get the key via the server console or in-game with the `/votekey` command
+4. When registering your server on voting sites:
+   - Enter your server's public IP address or domain
+   - Enter the Votifier port (default: 8192)
+   - Paste the public key when prompted
 
-# Whether to broadcast votes to the server
-broadcast-votes: true
+## Troubleshooting
+- If votes aren't being received, check that:
+  - The Votifier port is correctly forwarded.
+  - The correct public key is being used.
+  - Your firewall permits access.
 
-# Message to broadcast when a player votes
-# Available placeholders: {player}, {service}, {tokens}
-vote-message: "&6{player} &avoted for the server on &e{service} &aand received &e{tokens} &atokens!"
-
-# Debug mode - simulates a vote on player join if true
-# Only for testing purposes - set to false for production
-debug-mode: false
-
-# Votifier settings (for receiving votes from voting websites)
-votifier:
-  # Enable or disable the vote listener server
-  enabled: true
-  # Port to listen for vote connections (default is 8192)
-  port: 8192
-  # Whether to show detailed debug messages about vote connections
-  debug: false
-```
-
-## Commands
-
-- `/tokens` - Check your token balance
-- `/tokens <player>` - Check another player's token balance
-- `/tokens give <player> <amount>` - Give tokens to a player
-- `/tokens take <player> <amount>` - Take tokens from a player
-- `/tokens set <player> <amount>` - Set a player's token balance
-- `/votekey` - Display the public key for registering on voting sites
+## In-game Commands
+- `/tokens`: Check your current tokens
+- `/tokens [player]`: Check another player's tokens (requires permission)
+- `/tokens give [player] [amount]`: Give tokens to a player (admin only)
+- `/tokens take [player] [amount]`: Take tokens from a player (admin only)
+- `/tokens set [player] [amount]`: Set a player's tokens (admin only)
+- `/votesites`: Display a list of clickable voting site links
+- `/votekey`: Display the public key for registration on voting sites (admin only)
 
 ## Permissions
+- `simplevote.check`: Allows checking own token balance (default: true)
+- `simplevote.check.others`: Allows checking others' token balances (default: op)
+- `simplevote.admin`: Allows managing tokens and seeing vote key (default: op)
 
-- `simplevote.check` - Allow checking own token balance (default: true)
-- `simplevote.check.others` - Allow checking others' token balances (default: op)
-- `simplevote.admin` - Allow managing tokens for all players (default: op)
+## Support Me
+Donations help support the development of this project.
 
-## Setting Up Voting
+One-off donation: https://ko-fi.com/lolwhatyesme
 
-1. Start your server with SimpleVote installed
-2. Use the `/votekey` command to get your public key
-3. Register your server on voting websites (like Minecraft-Server-List.com, TopG, etc.)
-4. When registering, provide:
-   - Your server IP address
-   - The Votifier port (default: 8192) 
-   - Your public key
-5. Make sure the port is open and forwarded to your server
-6. Test by voting for your server
-7. Players will receive tokens automatically when they vote
-
-## Important Notes
-
-- You must have port forwarding enabled for the Votifier port (8192 by default)
-- If your server is behind a NAT/firewall, you must forward this port
-- The port can be changed in the config.yml if needed
-- When changing servers/IPs, you'll need to update your voting site registrations
+Patreon: https://www.patreon.com/lolwhatyesme
