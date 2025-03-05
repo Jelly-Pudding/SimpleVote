@@ -2,6 +2,7 @@ package com.jellypudding.simpleVote.events;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Event that is called when a player votes for the server
@@ -65,7 +66,7 @@ public class VoteEvent extends Event {
     }
 
     @Override
-    public HandlerList getHandlers() {
+    public @NotNull HandlerList getHandlers() {
         return HANDLERS;
     }
 

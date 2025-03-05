@@ -36,7 +36,9 @@ public class RSAUtil {
         // Ensure directory exists
         File rsaDir = new File(directory, "rsa");
         if (!rsaDir.exists()) {
-            rsaDir.mkdirs();
+            if (!rsaDir.mkdirs()) {
+                logger.warning("Failed to create RSA directory: " + rsaDir.getAbsolutePath());
+            }
         }
         
         // Try to load existing keys
@@ -58,7 +60,7 @@ public class RSAUtil {
             return true;
         } catch (Exception e) {
             logger.severe("Failed to generate RSA keys: " + e.getMessage());
-            e.printStackTrace();
+            logger.log(java.util.logging.Level.SEVERE, "Error details:", e);
             return false;
         }
     }
@@ -182,7 +184,7 @@ public class RSAUtil {
         // Insert line breaks every 64 characters
         for (int i = 0; i < base64Key.length(); i += 64) {
             int endIndex = Math.min(i + 64, base64Key.length());
-            builder.append(base64Key.substring(i, endIndex)).append("\n");
+            builder.append(base64Key, i, endIndex).append("\n");
         }
         
         builder.append("-----END PUBLIC KEY-----");
@@ -199,9 +201,8 @@ public class RSAUtil {
         if (keyPair == null) {
             return "RSA keys not initialized";
         }
-        
-        String base64Key = getPublicKeyBase64();
+
         // Some v1 clients expect the key without line breaks
-        return base64Key;
+        return getPublicKeyBase64();
     }
 } 
