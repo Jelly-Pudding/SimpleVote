@@ -3,6 +3,7 @@ package com.jellypudding.simpleVote;
 import com.jellypudding.simpleVote.commands.KeyCommand;
 import com.jellypudding.simpleVote.commands.TokenCommand;
 import com.jellypudding.simpleVote.commands.TokenTabCompleter;
+import com.jellypudding.simpleVote.commands.VoteSitesCommand;
 import com.jellypudding.simpleVote.votifier.VotifierManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -80,6 +81,14 @@ public final class SimpleVote extends JavaPlugin {
             keyCommand.setExecutor(new KeyCommand(this, votifierManager));
         } else {
             getLogger().severe("Failed to register votekey command!");
+        }
+        
+        // Register votesites command
+        PluginCommand voteSitesCommand = getCommand("votesites");
+        if (voteSitesCommand != null) {
+            voteSitesCommand.setExecutor(new VoteSitesCommand(this));
+        } else {
+            getLogger().severe("Failed to register votesites command!");
         }
     }
     

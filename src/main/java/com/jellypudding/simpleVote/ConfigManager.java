@@ -2,12 +2,17 @@ package com.jellypudding.simpleVote;
 
 import org.bukkit.configuration.file.FileConfiguration;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class ConfigManager {
     private final SimpleVote plugin;
     
     private int tokensPerVote;
     private boolean broadcastVotes;
-    private String voteMessage;
+    private List<Map<String, String>> votingSites;
     
     public ConfigManager(SimpleVote plugin) {
         this.plugin = plugin;
@@ -31,8 +36,21 @@ public class ConfigManager {
             config.set("broadcast-votes", true);
         }
         
-        if (!config.contains("vote-message")) {
-            config.set("vote-message", "&6{player} &avoted for the server on &e{service} &aand received &e{tokens} &atokens!");
+        // Set up default voting sites if they don't exist
+        if (!config.contains("voting-sites")) {
+            List<Map<String, Object>> defaultSites = new ArrayList<>();
+            
+            Map<String, Object> site1 = new HashMap<>();
+            site1.put("name", "PlanetMinecraft");
+            site1.put("url", "https://planetminecraft.com/server/your-server-name/vote/");
+            defaultSites.add(site1);
+            
+            Map<String, Object> site2 = new HashMap<>();
+            site2.put("name", "Minecraft Server List");
+            site2.put("url", "https://minecraft-server-list.com/server/your-server-id/vote/");
+            defaultSites.add(site2);
+            
+            config.set("voting-sites", defaultSites);
         }
         
         // Save config
@@ -41,7 +59,25 @@ public class ConfigManager {
         // Load values
         tokensPerVote = config.getInt("tokens-per-vote");
         broadcastVotes = config.getBoolean("broadcast-votes");
-        voteMessage = config.getString("vote-message");
+        
+        // Load voting sites
+        votingSites = new ArrayList<>();
+        List<?> sitesList = config.getList("voting-sites");
+        if (sitesList != null) {
+            for (Object siteObj : sitesList) {
+                if (siteObj instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> siteMap = (Map<String, Object>) siteObj;
+                    Map<String, String> site = new HashMap<>();
+                    
+                    if (siteMap.containsKey("name") && siteMap.containsKey("url")) {
+                        site.put("name", siteMap.get("name").toString());
+                        site.put("url", siteMap.get("url").toString());
+                        votingSites.add(site);
+                    }
+                }
+            }
+        }
     }
     
     public int getTokensPerVote() {
@@ -52,7 +88,7 @@ public class ConfigManager {
         return broadcastVotes;
     }
     
-    public String getVoteMessage() {
-        return voteMessage;
+    public List<Map<String, String>> getVotingSites() {
+        return votingSites;
     }
 } 
