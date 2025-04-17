@@ -51,11 +51,11 @@ public final class SimpleVote extends JavaPlugin {
             votifierManager.shutdown();
         }
         
-        // Save token data
+        // Close token manager database connection
         if (tokenManager != null) {
-            tokenManager.saveTokens();
+            tokenManager.closeConnection();
         }
-        
+
         getLogger().info("SimpleVote has been disabled!");
     }
     
@@ -93,4 +93,11 @@ public final class SimpleVote extends JavaPlugin {
         return configManager;
     }
 
+    /**
+     * Gets the TokenManager instance for API access.
+     * @return The TokenManager instance.
+     */
+    public TokenManager getTokenManager() {
+        return tokenManager;
+    }
 }
