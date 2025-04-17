@@ -122,7 +122,6 @@ public class TokenCommand implements CommandExecutor {
                     return false;
             }
             
-            tokenManager.saveTokens();
             return true;
         }
         

@@ -90,7 +90,5 @@ public class VoteListener implements Listener {
             Bukkit.getServer().sendMessage(voteMessage);
         }
         
-        // Save tokens only for the player who just voted
-        tokenManager.savePlayerTokens(playerUUID);
     }
-} 
+}
