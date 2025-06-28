@@ -58,19 +58,24 @@ public class VoteListener implements Listener {
                     NamedTextColor.YELLOW));
         } else {
             // Player is offline, try to find their UUID
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerName);
-            if (offlinePlayer.hasPlayedBefore()) {
-                playerUUID = offlinePlayer.getUniqueId();
-                
-                // Add tokens
-                tokenManager.addTokens(playerUUID, tokensPerVote);
-                plugin.getLogger().info("Added " + tokensPerVote + " tokens to offline player " + playerName);
-            } else {
-                plugin.getLogger().warning("Unknown player voted: " + playerName);
+            try {
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerName);
+                if (offlinePlayer.hasPlayedBefore()) {
+                    playerUUID = offlinePlayer.getUniqueId();
+
+                    // Add tokens
+                    tokenManager.addTokens(playerUUID, tokensPerVote);
+                    plugin.getLogger().info("Added " + tokensPerVote + " tokens to offline player " + playerName);
+                } else {
+                    plugin.getLogger().warning("Vote received for unknown player: " + playerName);
+                    return;
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("Vote received for invalid player name: " + playerName);
                 return;
             }
         }
-        
+
         // Broadcast the vote if enabled
         if (plugin.getConfigManager().getBroadcastVotes()) {
             // Get player's display name if online, otherwise use regular name

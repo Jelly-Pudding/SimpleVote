@@ -1,6 +1,6 @@
 # SimpleVote Plugin
 
-**SimpleVote** is a lightweight Minecraft Paper 1.21.4 plugin that rewards players with tokens when they vote for your server on voting websites. It includes built-in Votifier support to receive votes directly from voting sites.
+**SimpleVote** is a lightweight Minecraft Paper 1.21.6 plugin that rewards players with tokens when they vote for your server on voting websites. It includes built-in Votifier support to receive votes directly from voting sites.
 
 ## Features
 - Rewards players with tokens for voting
@@ -48,13 +48,10 @@ For voting websites to send votes to your server, you must ensure that the Votif
 - `/votekey`: Display the public key for registration on voting sites (admin only)
 
 ## Permissions
-- `simplevote.check`: Allows checking own token balance (default: true)
-- `simplevote.check.others`: Allows checking others' token balances (default: op)
-- `simplevote.admin`: Allows managing tokens and seeing vote key (default: op)
+- `simplevote.tokens`: Allows checking own token balance (default: true)
+- `simplevote.tokens.others`: Allows checking others' token balances (default: op)
+- `simplevote.votesites`: Allows viewing voting sites (default: true)
+- `simplevote.admin`: Allows managing tokens and accessing admin commands (default: op)
 
 ## Support Me
-Donations help support the development of this project.
-
-One-off donation: https://ko-fi.com/lolwhatyesme
-
-Patreon: https://www.patreon.com/lolwhatyesme
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K715TC1R)

@@ -24,6 +24,11 @@ public class VoteSitesCommand implements CommandExecutor {
     
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.hasPermission("simplevote.votesites")) {
+            sender.sendMessage(Component.text("You don't have permission to view voting sites.", NamedTextColor.RED));
+            return true;
+        }
+
         List<Map<String, String>> votingSites = plugin.getConfigManager().getVotingSites();
         
         if (votingSites.isEmpty()) {
@@ -49,4 +54,4 @@ public class VoteSitesCommand implements CommandExecutor {
         
         return true;
     }
-} 
+}
