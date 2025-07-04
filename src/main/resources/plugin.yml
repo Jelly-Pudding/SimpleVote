@@ -1,5 +1,5 @@
 name: SimpleVote
-version: '2.1'
+version: '2.2'
 main: com.jellypudding.simpleVote.SimpleVote
 api-version: '1.21'
 description: A simple vote plugin that rewards players with tokens when they vote for your server.
