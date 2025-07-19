@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'com.jellypudding'
-version = '2.2'
+version = '2.3'
 
 repositories {
     mavenCentral()
@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.7-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     implementation("com.google.code.gson:gson:2.13.1")
 }
 
