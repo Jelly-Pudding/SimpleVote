@@ -53,5 +53,50 @@ For voting websites to send votes to your server, you must ensure that the Votif
 - `simplevote.votesites`: Allows viewing voting sites (default: true)
 - `simplevote.admin`: Allows managing tokens and accessing admin commands (default: op)
 
+## API for Developers
+
+### Setup Dependencies
+1. Download the latest `SimpleVote.jar` and place it in a `libs` directory - and then add this to your `build.gradle` file:
+    ```gradle
+    dependencies {
+        compileOnly files('libs/SimpleVote-2.3.jar')
+    }
+    ```
+
+2. If SimpleVote is absolutely required by your plugin, then add this to your `plugin.yml` file - and this means if SimpleVote is not found then your plugin will not load:
+    ```yaml
+    depend: [SimpleVote]
+    ```
+
+### Getting SimpleVote Instance
+You can import SimpleVote into your project through using the below code:
+```java
+import org.bukkit.Bukkit;
+import com.jellypudding.simpleVote.SimpleVote;
+
+Plugin simpleVotePlugin = Bukkit.getPluginManager().getPlugin("SimpleVote");
+if (simpleVotePlugin instanceof SimpleVote && simpleVotePlugin.isEnabled()) {
+    SimpleVote simpleVote = (SimpleVote) simpleVotePlugin;
+}
+```
+
+### Available API Methods
+```java
+// Get the TokenManager instance
+TokenManager tokenManager = simpleVote.getTokenManager();
+
+// Get player's current token balance
+int currentTokens = tokenManager.getTokens(playerUUID);
+
+// Add tokens to a player
+tokenManager.addTokens(playerUUID, 10);
+
+// Remove tokens from a player (returns true if successful, false if insufficient tokens)
+boolean success = tokenManager.removeTokens(playerUUID, 5);
+
+// Set player's exact token amount
+tokenManager.setTokens(playerUUID, 50);
+```
+
 ## Support Me
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K3K715TC1R)
