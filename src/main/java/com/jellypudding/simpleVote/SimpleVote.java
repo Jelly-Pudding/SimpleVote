@@ -18,7 +18,7 @@ public final class SimpleVote extends JavaPlugin {
         // Save default config
         saveDefaultConfig();
         
-        // Initialize managers
+        // Initialise managers
         configManager = new ConfigManager(this);
         tokenManager = new TokenManager(this);
         
@@ -26,13 +26,17 @@ public final class SimpleVote extends JavaPlugin {
         VoteListener voteListener = new VoteListener(this, tokenManager, configManager.getTokensPerVote());
         getServer().getPluginManager().registerEvents(voteListener, this);
         
-        // Initialize built-in Votifier functionality (directly receives votes from voting websites)
+        // Initialise built-in Votifier functionality (directly receives votes from voting websites)
         votifierManager = new VotifierManager(this);
         votifierManager.initialize();
         
         // Register commands
         registerCommands();
         
+        // Initialise bStats metrics
+        int pluginId = 27542;
+        new Metrics(this, pluginId);
+
         // Startup message
         getLogger().info("SimpleVote has been enabled!");
         getLogger().info("Set up " + configManager.getTokensPerVote() + " tokens per vote");
