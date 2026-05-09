@@ -9,9 +9,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Command that displays the public key for Votifier
- */
 public class KeyCommand implements CommandExecutor {
     private final SimpleVote plugin;
     private final VotifierManager votifierManager;
@@ -32,17 +29,34 @@ public class KeyCommand implements CommandExecutor {
             sender.sendMessage(Component.text("Votifier functionality is not enabled.", NamedTextColor.RED));
             return true;
         }
-        
-        sender.sendMessage(Component.text("=== SimpleVote Public Key ===", NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("Use this key when registering on voting sites:", NamedTextColor.GREEN));
-        sender.sendMessage(Component.text(votifierManager.getRsaUtil().getV1FormattedPublicKey(), NamedTextColor.WHITE));
-        
-        // Port info
+
         int port = plugin.getConfig().getInt("votifier.port", 8192);
+        String sub = args.length > 0 ? args[0].toLowerCase() : "both";
+
+        if (sub.equals("token")) {
+            String token = plugin.getConfig().getString("votifier.token", "");
+            sender.sendMessage(Component.text("=== SimpleVote Token ===", NamedTextColor.YELLOW));
+            sender.sendMessage(Component.text("Paste this into the Token field on your voting site:", NamedTextColor.GREEN));
+            sender.sendMessage(Component.text(token.isEmpty() ? "(not generated yet)" : token, NamedTextColor.WHITE));
+        } else if (sub.equals("key")) {
+            sender.sendMessage(Component.text("=== SimpleVote Public Key ===", NamedTextColor.YELLOW));
+            sender.sendMessage(Component.text("Paste this into the Public Key field on your voting site:", NamedTextColor.GREEN));
+            sender.sendMessage(Component.text(votifierManager.getRsaUtil().getV1FormattedPublicKey(), NamedTextColor.WHITE));
+        } else {
+            sender.sendMessage(Component.text("=== SimpleVote Votifier Credentials ===", NamedTextColor.YELLOW));
+            sender.sendMessage(Component.empty());
+            sender.sendMessage(Component.text("Public Key (paste into the Public Key field):", NamedTextColor.GREEN));
+            sender.sendMessage(Component.text(votifierManager.getRsaUtil().getV1FormattedPublicKey(), NamedTextColor.WHITE));
+            sender.sendMessage(Component.empty());
+            String token = plugin.getConfig().getString("votifier.token", "");
+            sender.sendMessage(Component.text("Token (paste into the Token field):", NamedTextColor.GREEN));
+            sender.sendMessage(Component.text(token.isEmpty() ? "(not generated yet)" : token, NamedTextColor.WHITE));
+        }
+
         sender.sendMessage(Component.empty());
-        sender.sendMessage(Component.text("Server Information:", NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("Port: ", NamedTextColor.GREEN).append(Component.text(port, NamedTextColor.WHITE)));
-        sender.sendMessage(Component.text("Make sure this port is open and forwarded to your server.", NamedTextColor.GREEN));
+        sender.sendMessage(Component.text("Votifier port: ", NamedTextColor.GREEN)
+                .append(Component.text(port, NamedTextColor.WHITE)));
+        sender.sendMessage(Component.text("Tip: /votekey key   /votekey token   to print each separately.", NamedTextColor.GRAY));
         
         return true;
     }

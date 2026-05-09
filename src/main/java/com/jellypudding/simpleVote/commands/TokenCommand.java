@@ -51,9 +51,9 @@ public class TokenCommand implements CommandExecutor {
             }
 
             String targetName = args[0];
-            OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetName);
-            
-            if (!targetPlayer.hasPlayedBefore()) {
+            OfflinePlayer targetPlayer = Bukkit.getOfflinePlayerIfCached(targetName);
+
+            if (targetPlayer == null) {
                 sender.sendMessage(Component.text("Player not found: " + targetName, NamedTextColor.RED));
                 return false;
             }
@@ -88,8 +88,8 @@ public class TokenCommand implements CommandExecutor {
                 return false;
             }
             
-            OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetName);
-            if (!targetPlayer.hasPlayedBefore()) {
+            OfflinePlayer targetPlayer = Bukkit.getOfflinePlayerIfCached(targetName);
+            if (targetPlayer == null) {
                 sender.sendMessage(Component.text("Player not found: " + targetName, NamedTextColor.RED));
                 return false;
             }

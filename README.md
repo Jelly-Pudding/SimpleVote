@@ -1,6 +1,6 @@
 # SimpleVote Plugin
 
-**SimpleVote** is a lightweight Minecraft Paper 1.21.11 plugin that rewards players with tokens when they vote for your server on voting websites. It includes built-in Votifier support to receive votes directly from voting sites.
+**SimpleVote** is a lightweight Minecraft Paper 26.1.2 plugin that rewards players with tokens when they vote for your server on voting websites. Although it was custom built for [minecraftoffline.net](https://www.minecraftoffline.net), any server can use it.
 
 ## Features
 - Rewards players with tokens for voting
@@ -24,19 +24,26 @@ For voting websites to send votes to your server, you must ensure that the Votif
 3. If using a hosting provider, check their documentation for port configuration
 
 ### Registering on Voting Sites
-1. Start your server with SimpleVote installed
-2. The plugin will display its Votifier public key in the console during startup
-3. You can also get the key via the server console or in-game with the `/votekey` command
-4. When registering your server on voting sites:
-   - Enter your server's public IP address or domain
-   - Enter the Votifier port (default: 8192)
-   - Paste the public key when prompted
+
+Voting sites may show a **Public Key** field, a **Token** field, or both. Fill in whichever fields the site provides:
+
+- **Public Key**: paste the RSA public key. Run `/votekey key` in-game, or copy `votifier.public-key` from `plugins/SimpleVote/config.yml`.
+- **Token**: paste the HMAC token. Run `/votekey token` in-game, or copy `votifier.token` from `plugins/SimpleVote/config.yml`.
+
+Running `/votekey` on its own prints both values at once.
+
+Both values are generated automatically the first time the server starts. You never need to create or edit them manually.
+
+To register:
+1. Start your server with SimpleVote installed.
+2. On the voting site's registration page, enter your server's public IP and Votifier port (default: `8192`).
+3. Paste the public key, the token, or both, depending on what fields the site provides.
 
 ## Troubleshooting
 - If votes aren't being received, check that:
   - The Votifier port is correctly forwarded.
-  - The correct public key is being used.
-  - Your firewall permits access.
+  - You pasted the correct value into the correct field on the voting site (public key or token).
+  - Your firewall permits access on the Votifier port.
 
 ## In-game Commands
 - `/tokens`: Check your current tokens
@@ -45,7 +52,9 @@ For voting websites to send votes to your server, you must ensure that the Votif
 - `/tokens take [player] [amount]`: Take tokens from a player (admin only)
 - `/tokens set [player] [amount]`: Set a player's tokens (admin only)
 - `/votesites`: Display a list of clickable voting site links
-- `/votekey`: Display the public key for registration on voting sites (admin only)
+- `/votekey`: Display both the public key and token (admin only)
+- `/votekey key`: Display the public key only
+- `/votekey token`: Display the token only
 
 ## Permissions
 - `simplevote.tokens`: Allows checking own token balance (default: true)

@@ -28,7 +28,7 @@ public final class SimpleVote extends JavaPlugin {
         
         // Initialise built-in Votifier functionality (directly receives votes from voting websites)
         votifierManager = new VotifierManager(this);
-        votifierManager.initialize();
+        votifierManager.initialise();
         
         // Register commands
         registerCommands();
@@ -79,7 +79,16 @@ public final class SimpleVote extends JavaPlugin {
         // Register votekey command
         PluginCommand keyCommand = getCommand("votekey");
         if (keyCommand != null) {
-            keyCommand.setExecutor(new KeyCommand(this, votifierManager));
+            KeyCommand keyExecutor = new KeyCommand(this, votifierManager);
+            keyCommand.setExecutor(keyExecutor);
+            keyCommand.setTabCompleter((sender, cmd, alias, args) -> {
+                if (args.length == 1) {
+                    return java.util.List.of("key", "token").stream()
+                            .filter(s -> s.startsWith(args[0].toLowerCase()))
+                            .collect(java.util.stream.Collectors.toList());
+                }
+                return java.util.List.of();
+            });
         } else {
             getLogger().severe("Failed to register votekey command!");
         }

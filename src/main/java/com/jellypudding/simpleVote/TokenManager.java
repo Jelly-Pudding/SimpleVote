@@ -36,7 +36,7 @@ public class TokenManager {
             Class.forName("org.sqlite.JDBC");
             // Establish connection
             this.connection = DriverManager.getConnection(databaseUrl);
-            initializeDatabase();
+            initialiseDatabase();
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to connect to SQLite database: " + e.getMessage(), e);
         } catch (ClassNotFoundException e) {
@@ -47,7 +47,7 @@ public class TokenManager {
     /**
      * Creates the necessary database table if it doesn't exist.
      */
-    private void initializeDatabase() {
+    private void initialiseDatabase() {
         // Use try-with-resources for automatic closing of the statement
         try (Statement statement = connection.createStatement()) {
             // Removed NOT NULL constraint for tokens to avoid potential issues with default values or insertion

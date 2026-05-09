@@ -4,6 +4,10 @@ import com.jellypudding.simpleVote.SimpleVote;
 import com.jellypudding.simpleVote.events.VoteEvent;
 import org.bukkit.Bukkit;
 
+import com.google.gson.Gson;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
@@ -12,13 +16,14 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.UUID;
-import java.util.Map;
-import com.google.gson.Gson;
 
 /**
  * Server that listens for votes following the Votifier protocol
@@ -29,6 +34,7 @@ public class VotifierServer extends Thread {
     private final int port;
     private final boolean debug;
     private final RSAUtil rsaUtil;
+    private final String token;
     private ServerSocket serverSocket;
     private boolean running = true;
     private final ScheduledExecutorService voteProcessor;
@@ -42,11 +48,12 @@ public class VotifierServer extends Thread {
         V1, V2
     }
     
-    public VotifierServer(SimpleVote plugin, int port, boolean debug, RSAUtil rsaUtil) {
+    public VotifierServer(SimpleVote plugin, int port, boolean debug, RSAUtil rsaUtil, String token) {
         this.plugin = plugin;
         this.port = port;
         this.debug = debug;
         this.rsaUtil = rsaUtil;
+        this.token = token;
         this.voteProcessor = Executors.newScheduledThreadPool(1);
 
         setName("SimpleVote-VotifierServer");
@@ -281,13 +288,19 @@ public class VotifierServer extends Thread {
                 }
                 
                 Vote vote = Vote.fromVotifierString(voteMsg);
-                
+
                 if (debug) {
                     plugin.getLogger().info("Parsed v1 vote: " + vote);
                 }
-                
-                // Process the vote on the main thread
-                processVoteEvent(vote, writer, socket);
+
+                // Send response while the socket is still open, then fire the event
+                try {
+                    writer.write("{\"status\":\"ok\"}\r\n");
+                    writer.flush();
+                } catch (Exception e) {
+                    if (debug) plugin.getLogger().warning("Failed to send OK response: " + e.getMessage());
+                }
+                processVoteEvent(vote);
                 
             } catch (Exception e) {
                 plugin.getLogger().severe("Error decrypting v1 vote: " + e.getMessage());
@@ -302,131 +315,166 @@ public class VotifierServer extends Thread {
      * Process a v2 protocol vote (JSON with payload and signature)
      */
     private void processV2Vote(PushbackInputStream in, BufferedWriter writer, String challenge, Socket socket) throws Exception {
-        // Read the full JSON data
+        byte[] peek = new byte[2];
+        int peekRead = in.read(peek);
+        if (peekRead == 2 && peek[0] == 0x73 && peek[1] == 0x3A) {
+            if (debug) plugin.getLogger().info("Skipped s: prefix in v2 packet");
+        } else if (peekRead > 0) {
+            in.unread(peek, 0, peekRead);
+        }
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int b;
+        int depth = 0;
+        boolean inString = false;
+        boolean escape = false;
+        boolean started = false;
+
         while ((b = in.read()) != -1) {
             baos.write(b);
+            char c = (char) b;
+            if (escape)             { escape = false; continue; }
+            if (c == '\\' && inString) { escape = true;  continue; }
+            if (c == '"')           { inString = !inString; continue; }
+            if (!inString) {
+                if (c == '{')      { depth++; started = true; }
+                else if (c == '}' && --depth == 0 && started) { break; }
+            }
         }
-        
-        byte[] fullData = baos.toByteArray();
-        String jsonString = new String(fullData, StandardCharsets.UTF_8);
-        
+
+        String jsonString = baos.toString(StandardCharsets.UTF_8);
+
+        if (jsonString.isEmpty()) {
+            plugin.getLogger().warning("[V2] Received empty packet — nothing to parse");
+            return;
+        }
+
+        // Some implementations prefix the JSON with a length byte or other header bytes.
+        // Strip anything before the opening '{'.
+        int jsonStart = jsonString.indexOf('{');
+        if (jsonStart < 0) {
+            plugin.getLogger().warning("[V2] No JSON object found in received data ("
+                    + jsonString.length() + " bytes): " + jsonString.substring(0, Math.min(jsonString.length(), 100)));
+            return;
+        }
+        if (jsonStart > 0) {
+            if (debug) plugin.getLogger().info("V2: stripped " + jsonStart + " prefix byte(s) before JSON");
+            jsonString = jsonString.substring(jsonStart);
+        }
+
         if (debug) {
-            plugin.getLogger().info("Received v2 data: " + jsonString);
+            plugin.getLogger().info("V2 raw JSON (" + jsonString.length() + " chars): "
+                    + jsonString.substring(0, Math.min(jsonString.length(), 300)));
         }
-        
-        // Skip the magic number bytes if present (s:)
-        if (fullData.length > 2 && fullData[0] == 0x73 && fullData[1] == 0x3A) {
-            jsonString = new String(fullData, 2, fullData.length - 2, StandardCharsets.UTF_8);
+
+        // Parse outer JSON envelope
+        Map<String, Object> jsonMap;
+        try {
+            jsonMap = new Gson().fromJson(jsonString, new com.google.gson.reflect.TypeToken<Map<String, Object>>(){}.getType());
+        } catch (Exception e) {
+            plugin.getLogger().warning("V2 vote rejected: could not parse outer JSON - " + e.getMessage());
+            if (debug) plugin.getLogger().warning("V2 raw string was: " + jsonString);
+            return;
         }
-        
-        // Try to find the valid JSON portion
-        int jsonStart = Math.max(0, jsonString.indexOf('{'));
-        int jsonEnd = jsonString.lastIndexOf('}');
-        
-        if (jsonEnd > jsonStart) {
-            jsonString = jsonString.substring(jsonStart, jsonEnd + 1);
-            
-            if (debug) {
-                plugin.getLogger().info("Extracted JSON: " + jsonString);
+
+        if (!jsonMap.containsKey("payload")) {
+            plugin.getLogger().warning("V2 vote rejected: no 'payload' field. Keys received: " + jsonMap.keySet());
+            return;
+        }
+
+        String payload = (String) jsonMap.get("payload");
+        String signature = (String) jsonMap.get("signature");
+
+        if (signature == null) {
+            plugin.getLogger().warning("V2 vote rejected: missing signature field");
+            return;
+        }
+
+        // Verify HMAC-SHA256 signature
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(token.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] expected = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+            byte[] received = Base64.getDecoder().decode(signature);
+            if (!MessageDigest.isEqual(expected, received)) {
+                plugin.getLogger().warning("V2 vote rejected: HMAC mismatch — check the token in config.yml matches the voting site.");
+                return;
             }
-            
-            // Parse as JSON
-            try {
-                Map<String, Object> jsonMap = new Gson().fromJson(jsonString, new com.google.gson.reflect.TypeToken<Map<String, Object>>(){}.getType());
-                
-                if (jsonMap.containsKey("payload")) {
-                    String payload = (String) jsonMap.get("payload");
-                    Map<String, Object> voteData = new Gson().fromJson(payload, new com.google.gson.reflect.TypeToken<Map<String, Object>>(){}.getType());
-                    
-                    // Verify the challenge if available
-                    if (voteData.containsKey("challenge")) {
-                        String receivedChallenge = (String) voteData.get("challenge");
-                        // Trim to remove any CR/LF characters
-                        receivedChallenge = receivedChallenge.trim();
-                        if (!challenge.equals(receivedChallenge)) {
-                            plugin.getLogger().warning("Challenge verification failed for v2 vote.");
-                            plugin.getLogger().warning("Expected: '" + challenge + "', received: '" + receivedChallenge + "'");
-                            
-                            // Continue anyway in case there are format issues
-                        }
-                    }
-                    
-                    String username = (String) voteData.get("username");
-                    String serviceName = (String) voteData.get("serviceName");
-                    String address = (String) voteData.get("address");
-                    
-                    // Handle timestamp which may be a number or a string
-                    String timestamp;
-                    Object rawTimestamp = voteData.get("timestamp");
-                    if (rawTimestamp instanceof Double) {
-                        // Convert numeric timestamp to string
-                        timestamp = String.valueOf(((Double) rawTimestamp).longValue());
-                    } else if (rawTimestamp instanceof Long) {
-                        timestamp = String.valueOf(rawTimestamp);
-                    } else {
-                        // Already a string or other format
-                        timestamp = String.valueOf(rawTimestamp);
-                    }
-                    
-                    if (debug) {
-                        plugin.getLogger().info("Parsed v2 vote: username=" + username + 
-                            ", service=" + serviceName + ", address=" + address + 
-                            ", timestamp=" + timestamp);
-                    }
-                    
-                    Vote vote = new Vote(username, serviceName, address, timestamp);
-                    processVoteEvent(vote, writer, socket);
-                }
-            } catch (Exception e) {
-                plugin.getLogger().severe("Error processing V2 vote: " + e.getMessage());
-                plugin.getLogger().log(Level.SEVERE, "Error details", e);
+        } catch (Exception e) {
+            plugin.getLogger().warning("V2 vote rejected: HMAC error — " + e.getMessage());
+            return;
+        }
+
+        // Payload is either base64-encoded JSON (standard NuVotifier v2)
+        // or a plain JSON string (used by some sites). Try base64 first.
+        String payloadJson;
+        try {
+            payloadJson = new String(Base64.getDecoder().decode(payload), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            payloadJson = payload;
+        }
+
+        Map<String, Object> voteData;
+        try {
+            voteData = new Gson().fromJson(payloadJson, new com.google.gson.reflect.TypeToken<Map<String, Object>>(){}.getType());
+        } catch (Exception e) {
+            plugin.getLogger().warning("V2 vote rejected: could not parse payload JSON — " + e.getMessage());
+            if (debug) plugin.getLogger().warning("V2 payload was: " + payloadJson);
+            return;
+        }
+
+        // Verify the challenge
+        if (voteData.containsKey("challenge")) {
+            String receivedChallenge = ((String) voteData.get("challenge")).trim();
+            if (!challenge.equals(receivedChallenge)) {
+                plugin.getLogger().warning("V2 vote rejected: challenge mismatch");
+                return;
             }
+        }
+
+        String username = (String) voteData.get("username");
+        String serviceName = (String) voteData.get("serviceName");
+        String address = (String) voteData.get("address");
+
+        Object rawTimestamp = voteData.get("timestamp");
+        String timestamp;
+        if (rawTimestamp instanceof Double) {
+            timestamp = String.valueOf(((Double) rawTimestamp).longValue());
+        } else if (rawTimestamp instanceof Long) {
+            timestamp = String.valueOf(rawTimestamp);
         } else {
-            plugin.getLogger().warning("Invalid JSON format in v2 vote");
-            throw new IllegalArgumentException("Invalid JSON in vote data");
+            timestamp = String.valueOf(rawTimestamp);
         }
+
+        if (debug) {
+            plugin.getLogger().info("V2 vote parsed: username=" + username + ", service=" + serviceName);
+        }
+
+        Vote vote = new Vote(username, serviceName, address, timestamp);
+
+        try {
+            writer.write("{\"status\":\"ok\"}\r\n");
+            writer.flush();
+        } catch (Exception e) {
+            if (debug) plugin.getLogger().warning("V2: failed to send ok response — " + e.getMessage());
+        }
+        processVoteEvent(vote);
     }
     
     /**
-     * Process the Vote event on the main thread and send a response
+     * Fire the VoteEvent on the main thread.
+     * The socket response must be sent by the caller before invoking this.
      */
-    private void processVoteEvent(Vote vote, BufferedWriter writer, Socket socket) {
-        voteProcessor.submit(() -> {
-            try {
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    VoteEvent voteEvent = new VoteEvent(
-                        vote.username(),
-                        vote.serviceName(),
-                        vote.address(),
-                        vote.timeStamp()
-                    );
-                    
-                    // Call the event
-                    Bukkit.getPluginManager().callEvent(voteEvent);
-                    
-                    plugin.getLogger().info("Processed vote from " + vote.username() + " (from " + vote.serviceName() + ")");
-                });
-                
-                // Send success response
-                try {
-                    if (writer != null && socket != null && !socket.isClosed()) {
-                        // Send a JSON success response for both v1 and v2
-                        writer.write("{\"status\":\"ok\"}\r\n");
-                        writer.flush();
-                    }
-                } catch (Exception e) {
-                    if (debug) {
-                        plugin.getLogger().warning("Failed to send OK response: " + e.getMessage());
-                    }
-                }
-            } catch (Exception e) {
-                plugin.getLogger().warning("Error processing vote event: " + e.getMessage());
-                if (debug) {
-                    plugin.getLogger().log(Level.WARNING, "Error details", e);
-                }
-            }
+    private void processVoteEvent(Vote vote) {
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            VoteEvent voteEvent = new VoteEvent(
+                vote.username(),
+                vote.serviceName(),
+                vote.address(),
+                vote.timeStamp()
+            );
+            Bukkit.getPluginManager().callEvent(voteEvent);
+            plugin.getLogger().info("Processed vote from " + vote.username() + " (from " + vote.serviceName() + ")");
         });
     }
     

@@ -59,8 +59,8 @@ public class VoteListener implements Listener {
         } else {
             // Player is offline, try to find their UUID
             try {
-                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerName);
-                if (offlinePlayer.hasPlayedBefore()) {
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayerIfCached(playerName);
+                if (offlinePlayer != null) {
                     playerUUID = offlinePlayer.getUniqueId();
 
                     // Add tokens

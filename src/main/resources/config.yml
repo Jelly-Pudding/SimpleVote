@@ -30,8 +30,10 @@ votifier:
   enabled: true
   # Port to listen for vote connections (default is 8192)
   port: 8192
-  # RSA key will be automatically generated on first start
-  # You'll need to provide this public key to voting websites
+  # Auto-generated on first start. Some voting sites ask for a Token, a Public Key, or both.
+  # Fill in whichever fields the site provides. Use /votekey in-game to print both values.
+  token: ""
+  public-key: ""
 
 # Note: Make sure your server host allows the votifier port (8192 by default)
 # to be open and accessible from the internet for vote receiving to work.
