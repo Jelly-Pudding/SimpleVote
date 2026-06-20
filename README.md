@@ -1,6 +1,6 @@
 # SimpleVote Plugin
 
-**SimpleVote** is a lightweight Minecraft Paper 26.1.2 plugin that rewards players with tokens when they vote for your server on voting websites. Although it was custom built for [minecraftoffline.net](https://www.minecraftoffline.net), any server can use it.
+**SimpleVote** is a lightweight Minecraft Paper 26.2 plugin that rewards players with tokens when they vote for your server on voting websites. Although it was custom built for [minecraftoffline.net](https://www.minecraftoffline.net), any server can use it.
 
 ## Features
 - Rewards players with tokens for voting
